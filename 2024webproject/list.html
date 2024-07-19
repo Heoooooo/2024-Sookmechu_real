@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 게시판</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #postForm {
+            margin-bottom: 20px;
+        }
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .buttons button {
+            margin-left: 5px;
+        }
+        .post img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 10px;
+        }
+        .favorite {
+            color: red;
+        }
+        .edit-form {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>간단한 게시판</h1>
+    <form id="postForm">
+        <input type="text" id="postTitle" placeholder="제목을 입력하세요"><br><br>
+        <textarea id="postContent" rows="4" cols="50" placeholder="내용을 입력하세요"></textarea><br><br>
+        <input type="file" id="postImage"><br><br>
+        <button type="submit">글 올리기</button>
+    </form>
+    <input type="text" id="searchInput" placeholder="검색어를 입력하세요" onkeyup="searchPosts()">
+    <div id="posts"></div>
+
+    <script>
+        let posts = [];
+
+        function loadPosts() {
+            const savedPosts = localStorage.getItem('posts');
+            if (savedPosts) {
+                posts = JSON.parse(savedPosts);
+                renderPosts();
+            }
+        }
+
+        function savePosts() {
+            localStorage.setItem('posts', JSON.stringify(posts));
+        }
+
+        function renderPosts(filteredPosts = null) {
+            const postsContainer = document.getElementById('posts');
+            postsContainer.innerHTML = '';
+            const postsToRender = filteredPosts || posts;
+            postsToRender.forEach((post, index) => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const title = document.createElement('h3');
+                title.textContent = post.title;
+
+                const content = document.createElement('p');
+                content.textContent = post.content;
+
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'buttons';
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '삭제';
+                deleteButton.onclick = function() {
+                    deletePost(index);
+                };
+
+                const editButton = document.createElement('button');
+                editButton.textContent = '수정';
+                editButton.onclick = function() {
+                    showEditForm(index);
+                };
+
+                const favoriteButton = document.createElement('button');
+                favoriteButton.textContent = post.favorite ? '즐겨찾기 해제' : '즐겨찾기';
+                favoriteButton.onclick = function() {
+                    toggleFavorite(index);
+                };
+
+                buttonsDiv.appendChild(deleteButton);
+                buttonsDiv.appendChild(editButton);
+                buttonsDiv.appendChild(favoriteButton);
+
+                postDiv.appendChild(title);
+                postDiv.appendChild(content);
+
+                if (post.image) {
+                    const image = document.createElement('img');
+                    image.src = post.image;
+                    postDiv.appendChild(image);
+                }
+
+                if (post.favorite) {
+                    postDiv.classList.add('favorite');
+                }
+
+                postDiv.appendChild(buttonsDiv);
+                postsContainer.appendChild(postDiv);
+
+                // Edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                editForm.innerHTML = `
+                    <input type="text" id="editTitle-${index}" placeholder="제목을 입력하세요" value="${post.title}"><br><br>
+                    <textarea id="editContent-${index}" rows="4" cols="50" placeholder="내용을 입력하세요">${post.content}</textarea><br><br>
+                    <input type="file" id="editImage-${index}"><br><br>
+                    <button onclick="saveEdit(${index})">저장</button>
+                    <button onclick="cancelEdit(${index})">취소</button>
+                `;
+                postDiv.appendChild(editForm);
+            });
+        }
+
+        function deletePost(index) {
+            posts.splice(index, 1);
+            savePosts();
+            renderPosts();
+        }
+
+        function showEditForm(index) {
+            const editForms = document.getElementsByClassName('edit-form');
+            for (let form of editForms) {
+                form.style.display = 'none';
+            }
+            editForms[index].style.display = 'block';
+        }
+
+        function saveEdit(index) {
+            const newTitle = document.getElementById(`editTitle-${index}`).value;
+            const newContent = document.getElementById(`editContent-${index}`).value;
+            const newImageInput = document.getElementById(`editImage-${index}`);
+            let newImage = posts[index].image;
+
+            if (newImageInput.files && newImageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newImage = e.target.result;
+                    updatePost(index, newTitle, newContent, newImage);
+                };
+                reader.readAsDataURL(newImageInput.files[0]);
+            } else {
+                updatePost(index, newTitle, newContent, newImage);
+            }
+        }
+
+        function updatePost(index, title, content, image) {
+            posts[index].title = title;
+            posts[index].content = content;
+            posts[index].image = image;
+            savePosts();
+            renderPosts();
+        }
+
+        function cancelEdit(index) {
+            const editForms = document.getElementsByClassName('edit-form');
+            editForms[index].style.display = 'none';
+        }
+
+        function toggleFavorite(index) {
+            posts[index].favorite = !posts[index].favorite;
+            savePosts();
+            renderPosts();
+        }
+
+        document.getElementById('postForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const imageInput = document.getElementById('postImage');
+            let image = '';
+
+            if (imageInput.files && imageInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image = e.target.result;
+                    addPost(title, content, image);
+                };
+                reader.readAsDataURL(imageInput.files[0]);
+            } else {
+                addPost(title, content, image);
+            }
+        });
+
+        function addPost(title, content, image) {
+            if (title && content) {
+                posts.push({ title, content, image, favorite: false });
+                savePosts();
+                renderPosts();
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                document.getElementById('postImage').value = '';
+            }
+        }
+
+        function searchPosts() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filteredPosts = posts.filter(post => 
+                post.title.toLowerCase().includes(searchInput) ||
+                post.content.toLowerCase().includes(searchInput)
+            );
+            renderPosts(filteredPosts);
+        }
+
+        window.onload = loadPosts;
+    </script>
+</body>
+</html>
