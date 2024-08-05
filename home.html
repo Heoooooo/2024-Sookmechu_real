@@ -33,6 +33,9 @@
             font-size: 20px;
             text-decoration: none;
         }
+        .nav-menu a:hover {
+             background-color: rgb(245, 156, 47);
+        }
         .body-content {
             display: flex;
             flex-direction: row;
@@ -52,10 +55,10 @@
             padding: 1rem;
             background-color: orange;
             justify-content: flex-end;
-            flex: 1; /* 추가된 부분 */
+            flex: 1;
         }
         .map-content img {
-            max-width: 100%; /* 변경된 부분 */
+            max-width: 100%;
         }
     </style>
 </head>
@@ -65,7 +68,7 @@
     </header>
     <nav class="nav-menu">
         <div id="random-food">
-            나는 오늘 <span id="random-food_item"></span>을 먹을까
+            나는 오늘 <span id="random-food_item"></span> 먹을까
             <button onclick="generateRandomFood()">음식 추천받기</button>
         </div>
     
@@ -76,26 +79,28 @@
     <div class="body-content">
         <aside class="sidebar">
             <h2>To eat list</h2>
-            <input type="text" id="new-item" placeholder="음식 입력">
+            <input type="text" id="new-item" placeholder="">
             <button onclick="addItem()">추가</button>
             <ul id="item-list"></ul>
         </aside>
         <div class="map-content">
-            <img src="map.jpg" alt="숙대맛집 지도">
+            <img src="map.jpg" alt="숙대맛집 지도" usemap="#map" onclick="showCoords(event)">
+            <map name="map">
+                <area shape="rect" coords="410,14.6875,573,44" href="ludabread_c.html" alt="Luda Bread">
+            </map>
         </div>
     </div>
     <script>
         function generateRandomFood() {
             // 랜덤 리스트 생성
-            const foodList = ["피자", "햄버거", "치킨", "초밥", "파스타"];
+            const foodList = ["루다 브레드", "청파동커피", "포36거리", "마돈나", "쎄라비", "메르시", "아리랑", "빨봉분식", "샐러디", "본솔커피", "고씨네", "일미오", "몬스터플레이스", "위드달걀빵", "리또리또", "라사천마라탕", "미스터카츠", "또와또", "숙대소반", "감래", "베라", "마시앤바시", "긴자료코", "홍곱창", "타코비", "와플하우스", "갯마을칼국수", "어바웃샤브", "알촌", " 경성돈까스", "신머이쌀국수", "작은도쿄", "가문의 우동", "달볶이", "띵동와플", "효이다방", "브루다", "너드커피", "탕화쿵푸" ,"포라임", "행복은간장밥", "음식미담", "숙대앞맛있는샌드위치", "마라명가", "을의 커피", "봉구스", "이삭", "피굽남피자", "스타벅스", "구이마당", "네코노스시", "피자보이시나", "청파맨션", "정", "행복한 떡집", "ASAP", "프랭크버거", "서브웨이", "두끼", "카페코지", "왈가닥", "만나칼국수", "몽소", "말죽거리 꽈배기", "비일", "베나레스", "까치네", "신내떡", "쿳사", "밥때"];
             
-            // 랜덤으로 항목 선택
             const randomFood = foodList[Math.floor(Math.random() * foodList.length)];
             
             // 문구 생성
             const randomMessage = `${randomFood}`;
             
-            // 문구를 HTML에 삽입
+            // 문구를 HTML 삽입하는 부분
             document.getElementById("random-food_item").innerText = randomMessage;
         }
 
@@ -118,6 +123,14 @@
                 li.parentElement.removeChild(li);
             };
             return deleteBtn;
+        }
+
+        function showCoords(event) {
+            const img = event.target;
+            const rect = img.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            alert("X: " + x + ", Y: " + y);
         }
     </script>
 </body>
